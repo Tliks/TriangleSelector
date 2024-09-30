@@ -1,0 +1,14 @@
+{
+  "name": "com.aoyon.triangleselector",
+  "displayName": "Triangle Selector",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "On-Scene Mesh Area Selection",
+  "author": {
+    "name": "Ao_425",
+    "url": "https://github.com/Tliks"
+  },
+  "url": "https://github.com/Tliks/TriangleSelector",
+  "changelogUrl": "https://github.com/Tliks/TriangleSelector/blob/main/CHANGELOG.md",
+  "vpmDependencies": {}
+}
