@@ -46,27 +46,26 @@ namespace com.aoyon.triangleselector
         private static TriangleSelectorOverlay _overlay;
         private static Vector2 _size = NEW_MODE_SIZE;
 
-        public static void Initialize(PreviewController previewController, string selectionName)
+        public static void Initialize(PreviewController previewController, SaveModes saveMode, string selectionName)
         {
             _previewController = previewController;
             Options = new();
 
             // NewMode
-            if (selectionName == null || selectionName == "")
+            if (saveMode == SaveModes.New)
             {
-                Options.SaveMode = SaveModes.New;
-                Options.SelectionName = "";
                 _size = NEW_MODE_SIZE;
 
             }
             // EditMode
             else
             {
-                Options.SaveMode = SaveModes.OverWrite;
-                Options.SelectionName = selectionName;
                 _size = EDIT_MODE_SIZE;
             }
-
+            
+            Options.SelectionName = selectionName;
+            Options.SaveMode = saveMode;
+            
             _overlay?.Close();
 
         }

@@ -114,7 +114,7 @@ namespace com.aoyon.triangleselector
                     else
                     {
                         var defaultSelection = _triangleSelections[_selectedIndex];
-                        TriangleSelector.Initialize(_skinnedMeshRenderer, defaultSelection.selection, defaultSelection.displayname);
+                        TriangleSelector.Initialize(_skinnedMeshRenderer, SaveModes.OverWrite, defaultSelection.selection, defaultSelection.displayname);
                     }
                     TriangleSelector.RegisterApplyCallback(ProcessNewSelection);
                 }

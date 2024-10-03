@@ -38,10 +38,14 @@ namespace com.aoyon.triangleselector
 
         public void Initialize(
             SkinnedMeshRenderer renderer,
+            SaveModes saveMode, 
             IReadOnlyCollection<int> defaultselection,
-            string defaultSelectionName)
+            string defaultSelectionNam
+        )
         {
             UnselectedMeshRenderer = renderer;
+
+            Selection.activeGameObject = UnselectedMeshRenderer.gameObject;
 
             _originalMesh = renderer.sharedMesh;
             _bakedMesh = new Mesh(); 
@@ -60,7 +64,7 @@ namespace com.aoyon.triangleselector
 
             _mouseEvents = new MouseEvents(this);
 
-            TriangleSelectorOverlay.Initialize(this, defaultSelectionName);
+            TriangleSelectorOverlay.Initialize(this, saveMode, defaultSelectionNam);
         }
 
         public void ShowWindow()
@@ -71,9 +75,6 @@ namespace com.aoyon.triangleselector
 #endif
 
             CustomAnimationMode.StartAnimationMode(UnselectedMeshRenderer);
-
-            Selection.activeObject = null; 
-            Selection.activeGameObject = UnselectedMeshRenderer.gameObject;
 
             AddpreviewObject(ref _unselectedObject, UnselectedMeshRenderer.transform.position, UnselectedMeshRenderer.transform.rotation);
             AddpreviewObject(ref _selectedObject, UnselectedMeshRenderer.transform.position + new Vector3(100, 0, -100), UnselectedMeshRenderer.transform.rotation);

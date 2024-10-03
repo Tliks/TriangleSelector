@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace com.aoyon.triangleselector
@@ -20,26 +21,19 @@ namespace com.aoyon.triangleselector
         private static Action<TriangleSelectorResult> OnApply;
         private static PreviewController _previewController;
         
-
-        public static void Initialize(SkinnedMeshRenderer skinnedMeshRenderer)
+        public static void Initialize(
+            SkinnedMeshRenderer skinnedMeshRenderer,
+            SaveModes saveMode = SaveModes.New, 
+            IReadOnlyCollection<int> defaultTriangleIndices = null,
+            string defaultSelectionName = ""
+        )
         {
-            Initialize(skinnedMeshRenderer, new List<int>(), null);
-        }
-
-        public static void Initialize(SkinnedMeshRenderer skinnedMeshRenderer, IReadOnlyCollection<int> defaultTriangleIndices)
-        {
-            Initialize(skinnedMeshRenderer, defaultTriangleIndices, null);
-        }
-
-        public static void Initialize(SkinnedMeshRenderer skinnedMeshRenderer, string defaultSelectionName)
-        {
-            Initialize(skinnedMeshRenderer, new List<int>(), defaultSelectionName);
-        }
-
-        public static void Initialize(SkinnedMeshRenderer skinnedMeshRenderer, IReadOnlyCollection<int> defaultTriangleIndices, string defaultSelectionName)
-        {
+            Dispose();
+            Selection.activeObject = null;
+            Selection.activeGameObject = null;
             _previewController = new PreviewController();
-            _previewController.Initialize(skinnedMeshRenderer, defaultTriangleIndices, defaultSelectionName);
+            defaultTriangleIndices ??= new List<int>();
+            _previewController.Initialize(skinnedMeshRenderer, saveMode, defaultTriangleIndices, defaultSelectionName);
             _previewController.ShowWindow();
             Disposed = false;
         }
@@ -49,6 +43,15 @@ namespace com.aoyon.triangleselector
             OnApply += callback;
         }
 
+        public static void Dispose()
+        {
+            if (!Disposed)
+            {
+                Disposed = true;
+                _previewController.Dispose();
+                OnApply = null;
+            }
+        }
 
         internal static void InvokeAndDispose(TriangleSelectorResult result)
         {
@@ -57,16 +60,6 @@ namespace com.aoyon.triangleselector
                 Disposed = true;
                 _previewController.Dispose();
                 OnApply?.Invoke(result);
-                OnApply = null;
-            }
-        }
-
-        internal static void Dispose()
-        {
-            if (!Disposed)
-            {
-                Disposed = true;
-                _previewController.Dispose();
                 OnApply = null;
             }
         }
