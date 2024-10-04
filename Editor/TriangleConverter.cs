@@ -7,25 +7,24 @@ namespace com.aoyon.triangleselector
 {
     public static class TriangleConverter
     {
-        public static Vector3[] Encode(Mesh mesh, int[] triangleIndices)
+        public static IEnumerable<Vector3> Encode(Mesh mesh, IEnumerable<int> triangleIndices)
         {
             Vector3[] vertices = mesh.vertices;
-            int[] triagnles = mesh.triangles;
+            int[] triangles = mesh.triangles;
             
             HashSet<Vector3> positions = new HashSet<Vector3>();
 
-            for (int i = 0; i < triangleIndices.Length; i++)
+            foreach (int triangleIndex in triangleIndices)
             {
-                int triangleIndex = triangleIndices[i];
-                positions.Add(vertices[triagnles[triangleIndex * 3]]);
-                positions.Add(vertices[triagnles[triangleIndex * 3 + 1]]);
-                positions.Add(vertices[triagnles[triangleIndex * 3 + 2]]);
+                positions.Add(vertices[triangles[triangleIndex * 3]]);
+                positions.Add(vertices[triangles[triangleIndex * 3 + 1]]);
+                positions.Add(vertices[triangles[triangleIndex * 3 + 2]]);
             }
 
-            return positions.ToList().ToArray();
+            return positions;
         }
 
-        public static int[] Decode(Mesh mesh, Vector3[] positions)
+        public static IEnumerable<int> Decode(Mesh mesh, IEnumerable<Vector3> positions)
         {   
             Vector3[] vertices = mesh.vertices;
             int[] triangles = mesh.triangles;
@@ -43,7 +42,7 @@ namespace com.aoyon.triangleselector
                 }
             }
 
-            return triangleIndices.ToArray();
+            return triangleIndices;
         }
 
     }

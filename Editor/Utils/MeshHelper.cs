@@ -7,23 +7,32 @@ namespace com.aoyon.triangleselector.utils
     public class MeshHelper
     {
 
-        public static Mesh KeepMesh(Mesh originalMesh, HashSet<int> triangleIndexestoKeep)
+        public static Mesh KeepMesh(Mesh originalMesh, IEnumerable<int> triangleIndexestoKeep)
         {
-            return ProcessMesh(originalMesh, triangleIndexestoKeep, true);
+            return GetMesh(originalMesh, triangleIndexestoKeep, true);
         }
 
-        public static Mesh DeleteMesh(Mesh originalMesh, HashSet<int> triangleIndexestoRemove)
+        public static Mesh DeleteMesh(Mesh originalMesh, IEnumerable<int> triangleIndexestoRemove)
         {
-            return ProcessMesh(originalMesh, triangleIndexestoRemove, false);
+            return GetMesh(originalMesh, triangleIndexestoRemove, false);
         }
 
-        private static Mesh ProcessMesh(Mesh originalMesh, HashSet<int> triangleIndexes, bool keep)
+        public static Mesh KeepMesh(Mesh originalMesh, IEnumerable<Vector3> positiontoKeep)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            var triangleIndexes = TriangleConverter.Decode(originalMesh, positiontoKeep);
+            return GetMesh(originalMesh, triangleIndexes, true);
+        }
 
+        public static Mesh DeleteMesh(Mesh originalMesh, IEnumerable<Vector3> positionToDelete)
+        {
+            var triangleIndexes = TriangleConverter.Decode(originalMesh, positionToDelete);
+            return GetMesh(originalMesh, triangleIndexes, false);
+        }
+        
+        private static Mesh GetMesh(Mesh originalMesh, IEnumerable<int> triangleIndexes, bool keep)
+        {
+            var triangleset = new HashSet<int>(triangleIndexes);
             HashSet<int> verticesToKeep = new();
-
             List<int>[] newSubmeshTriangles = new List<int>[originalMesh.subMeshCount];
             for (int i = 0; i < originalMesh.subMeshCount; ++i)
                 newSubmeshTriangles[i] = new List<int>();
@@ -35,8 +44,8 @@ namespace com.aoyon.triangleselector.utils
                 for (int i = 0; i < originalTriangles.Length; i += 3)
                 {
                     int globalTriangleIndex = (globalTriangleIndexOffset + i) / 3;
-                    if ((keep && triangleIndexes.Contains(globalTriangleIndex)) || 
-                        (!keep && !triangleIndexes.Contains(globalTriangleIndex)))
+                    if ((keep && triangleset.Contains(globalTriangleIndex)) || 
+                        (!keep && !triangleset.Contains(globalTriangleIndex)))
                     {
                         newSubmeshTriangles[subMeshIndex].Add(originalTriangles[i]);
                         newSubmeshTriangles[subMeshIndex].Add(originalTriangles[i + 1]);
@@ -111,9 +120,6 @@ namespace com.aoyon.triangleselector.utils
             CopyColors(originalMesh, newMesh, oldToNewVertexMap);
             CopyBlendShapes(originalMesh, newMesh, oldToNewVertexMap);
             newMesh.bindposes = originalMesh.bindposes;
-
-            stopwatch.Stop();
-            // UnityEngine.Debug.Log("Total Processing: " + stopwatch.ElapsedMilliseconds + " ms");
 
             return newMesh;
         }

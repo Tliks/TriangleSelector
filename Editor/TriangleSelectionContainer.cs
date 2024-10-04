@@ -15,7 +15,7 @@ namespace com.aoyon.triangleselector
     [Serializable]
     public class TriangleSelection
     {
-        public List<int> selection = new();
+        public List<Vector3> selection = new();
 
         public string displayname = "";
         public long createtime = 0;

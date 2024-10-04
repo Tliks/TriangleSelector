@@ -9,21 +9,28 @@ using com.aoyon.triangleselector.utils;
 
 namespace com.aoyon.triangleselector
 {
-
-
+    /// <summary>
+    /// Triangle Selectorの選択結果をAssetsに保持、表示するクラス。
+    /// Triangle SelectorはTriangle Indicesを返り値に持つのに対し、ここではデータの堅牢性のためVector3 Positionsで保持します。
+    /// </summary>
     public class RenderSelector : Editor
     {
         private SkinnedMeshRenderer _skinnedMeshRenderer;
         private Mesh _mesh;
         private TriangleSelectionContainer _triangleSelectionContainer;
         private List<TriangleSelection> _triangleSelections;
-        private Action<List<int>> _onSelectionChanged;
+        private Action<List<Vector3>> _onSelectionChanged;
         private string[] _displayedOptions;
         private int _selectedIndex = 0;
         private string _noneLabel;
 
-
         public void Initialize(SkinnedMeshRenderer skinnedMeshRenderer, IReadOnlyList<int> defaultSelection, string label = "None")
+        {
+            IReadOnlyList<Vector3> selection = TriangleConverter.Encode(skinnedMeshRenderer.sharedMesh, defaultSelection).ToList();
+            Initialize(skinnedMeshRenderer, selection, label);
+        }
+
+        public void Initialize(SkinnedMeshRenderer skinnedMeshRenderer, IReadOnlyList<Vector3> defaultSelection, string label = "None")
         {
             _skinnedMeshRenderer = skinnedMeshRenderer;
             _mesh = _skinnedMeshRenderer.sharedMesh;
@@ -32,7 +39,7 @@ namespace com.aoyon.triangleselector
             _selectedIndex = SaveAsScriptableObject.FindIndex(_triangleSelections, defaultSelection);
         }
 
-        public void RegisterApplyCallback(Action<List<int>> onSelectionChanged)
+        public void RegisterApplyCallback(Action<List<Vector3>> onSelectionChanged)
         {
             _onSelectionChanged = onSelectionChanged;
         }
@@ -114,7 +121,8 @@ namespace com.aoyon.triangleselector
                     else
                     {
                         var defaultSelection = _triangleSelections[_selectedIndex];
-                        TriangleSelector.Initialize(_skinnedMeshRenderer, SaveModes.OverWrite, defaultSelection.selection, defaultSelection.displayname);
+                        var defaultValues = TriangleConverter.Decode(_mesh, defaultSelection.selection).ToList();
+                        TriangleSelector.Initialize(_skinnedMeshRenderer, SaveModes.OverWrite, defaultValues, defaultSelection.displayname);
                     }
                     TriangleSelector.RegisterApplyCallback(ProcessNewSelection);
                 }
@@ -135,6 +143,7 @@ namespace com.aoyon.triangleselector
             List<int> newSelection = result.SelectedTriangleIndices;
             if (newSelection != null && newSelection.Count > 0)
             {
+                var newPositions = TriangleConverter.Encode(_mesh, newSelection).ToList();
                 string displayname = result.SelectionName;
                 // displaynameが未入力時は自動決定
                 if (displayname == null || displayname == "")
@@ -145,7 +154,7 @@ namespace com.aoyon.triangleselector
 
                 if (result.SaveMode == SaveModes.New || result.SaveMode == SaveModes.EditNew)
                 {
-                    TriangleSelection newTriangleSelection = new TriangleSelection { selection = newSelection };
+                    TriangleSelection newTriangleSelection = new TriangleSelection { selection = newPositions };
                     newTriangleSelection.displayname = displayname;
                     newTriangleSelection.createtime = SaveAsScriptableObject.GetTimestamp();
                     SaveAsScriptableObject.AddData(_triangleSelectionContainer, newTriangleSelection);
@@ -153,7 +162,7 @@ namespace com.aoyon.triangleselector
                 else if (result.SaveMode == SaveModes.OverWrite)
                 {
                     TriangleSelection currentTriangleSelection = _triangleSelectionContainer.selections[_selectedIndex];
-                    currentTriangleSelection.selection = newSelection;
+                    currentTriangleSelection.selection = newPositions;
                     currentTriangleSelection.displayname = displayname;
                     currentTriangleSelection.createtime = SaveAsScriptableObject.GetTimestamp();
                     SaveAsScriptableObject.UpdateData(_triangleSelectionContainer);
@@ -164,8 +173,8 @@ namespace com.aoyon.triangleselector
                 }
  
                 LoadAsset();
-                _selectedIndex = SaveAsScriptableObject.FindIndex(_triangleSelections, newSelection);
-                CallSelectionChange(_triangleSelections[_selectedIndex].selection);
+                _selectedIndex = SaveAsScriptableObject.FindIndex(_triangleSelections, newPositions);
+                CallSelectionChange(newPositions);
             }  
         }
 
@@ -181,10 +190,11 @@ namespace com.aoyon.triangleselector
                 .ToArray();
         }
 
-        private void CallSelectionChange(List<int> newValues)
+        private void CallSelectionChange(IEnumerable<Vector3> newPositions)
         {
-            _onSelectionChanged?.Invoke(new List<int>(newValues));
+            _onSelectionChanged?.Invoke(new List<Vector3>(newPositions));
         }
+
     }
 
     public class SaveAsScriptableObject
@@ -223,26 +233,11 @@ namespace com.aoyon.triangleselector
             return index;
         }
 
-        public static int FindIndex(List<TriangleSelection> triangleSelections, IReadOnlyList<int> selection)
+
+        public static int FindIndex(List<TriangleSelection> triangleSelections, IReadOnlyList<Vector3> selection)
         {
             int index = triangleSelections.FindIndex(ts => ts.selection.SequenceEqual(selection));
             return index;
-        }
-
-        public static int FindIndex(List<TriangleSelection> triangleSelections, SerializedProperty listProperty)
-        {
-            int index = FindIndex(triangleSelections, ConvertToList(listProperty));
-            return index;
-        }
-
-        private static List<int> ConvertToList(SerializedProperty listProperty)
-        {
-            List<int> intList = new List<int>();
-            for (int i = 0; i < listProperty.arraySize; i++)
-            {
-                intList.Add(listProperty.GetArrayElementAtIndex(i).intValue);
-            }
-            return intList;
         }
 
         public static TriangleSelectionContainer GetContainer(Mesh mesh)
@@ -295,7 +290,7 @@ namespace com.aoyon.triangleselector
             bool hasEmptySelection = container.selections.Any(s => s.selection.Count == 0);
             if (!hasEmptySelection)
             {
-                var defaultSelection = new TriangleSelection() { selection = new List<int>() };
+                var defaultSelection = new TriangleSelection() { selection = new() };
                 container.selections.Insert(0, defaultSelection);
                 UpdateData(container);
             }

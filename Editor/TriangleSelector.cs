@@ -15,6 +15,9 @@ namespace com.aoyon.triangleselector
         public SaveModes? SaveMode;
     }
 
+    /// <summary>
+    /// メッシュの一部を選択するクラス。SkinnedMeshRendererを引数としてActionでTriangleIndicesを返します。
+    /// </summary>
     public static class TriangleSelector
     {
         public static bool Disposed = true;
