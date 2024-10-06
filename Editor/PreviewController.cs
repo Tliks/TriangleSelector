@@ -90,7 +90,7 @@ namespace com.aoyon.triangleselector
             _sceneRaycastUtility.AddCollider(_selectedObject, _unselectedObject);
             HighlightEdgesManager.AddComponent(_selectedObject, _unselectedObject);
 
-            SceneView.duringSceneGui += _mouseEvents.OnSceneGUI;
+            _mouseEvents.Initialize();
 
             UpdateMesh();
         }
@@ -100,7 +100,7 @@ namespace com.aoyon.triangleselector
             CustomSceneView.Dispose();
             Object.DestroyImmediate(_selectedObject);
             Object.DestroyImmediate(_unselectedObject);
-            SceneView.duringSceneGui -= _mouseEvents.OnSceneGUI;
+            _mouseEvents.Dispose();
             CustomAnimationMode.StopAnimationMode();
             
 #if NDMF_1_5
