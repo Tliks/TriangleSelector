@@ -92,7 +92,8 @@ namespace com.aoyon.triangleselector
             EditorGUILayout.Space();
 
             // labels
-            string label  = $"{GetLocalizedText("TriangleSelector.SelectedTotalPolygonsLabel")}: {_previewController.UnselectedMeshRenderer.name}";
+            //string label  = $"{GetLocalizedText("TriangleSelector.SelectedTotalPolygonsLabel")}: {_previewController.UnselectedMeshRenderer.name}";
+            string label = GetLocalizedText("TriangleSelector.SelectedTotalPolygonsLabel");
             GUILayout.Label(label, EditorStyles.boldLabel);
             GUILayout.Label($"{_previewController.TriangleSelectionManager.GetSelectedTriangles().Count}/{_previewController.TriangleSelectionManager.GetAllTriangles().Count}");
             //EditorGUILayout.HelpBox(GetLocalizedText("TriangleSelector.commondescription"), MessageType.Info);
