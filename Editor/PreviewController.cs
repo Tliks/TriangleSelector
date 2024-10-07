@@ -143,7 +143,7 @@ namespace com.aoyon.triangleselector
         private static void AddpreviewObject(ref GameObject obj, Vector3 position, Quaternion rotation)
         {
             obj = new GameObject();
-            obj.name = "SMU preview";
+            obj.name = "Triangle Selector Preview";
             obj.transform.position = position;
             obj.transform.rotation = rotation;
         }
