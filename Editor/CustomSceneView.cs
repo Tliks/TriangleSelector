@@ -76,15 +76,17 @@ namespace com.aoyon.triangleselector
             }
         }
 
-        void OnDestroy()
+        public override void OnDisable()
         {
+            base.OnDisable();
             _window = null;
             SetLastActiveSceneView(_defaultSceneView);
             isMouseOver = false;
             TriangleSelector.Dispose();
         }
-    
-        public void OnGUI()
+
+        [Obsolete]
+        protected override void OnGUI()
         {
             if (mouseOverWindow == this)
             {
