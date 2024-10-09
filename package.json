@@ -1,7 +1,7 @@
 {
   "name": "com.aoyon.triangleselector",
   "displayName": "Triangle Selector",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "unity": "2022.3",
   "description": "On-Scene Mesh Area Selection",
   "author": {
