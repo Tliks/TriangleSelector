@@ -1,6 +1,8 @@
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace com.aoyon.triangleselector.utils
 {
@@ -118,7 +120,9 @@ namespace com.aoyon.triangleselector.utils
             }
 
             CopyColors(originalMesh, newMesh, oldToNewVertexMap);
-            CopyBlendShapes(originalMesh, newMesh, oldToNewVertexMap);
+            Profiler.BeginSample("CopyBlendShapes");
+            CopyBlendShapes(originalMesh, newMesh, verticesToKeep.ToList());
+            Profiler.EndSample();
             newMesh.bindposes = originalMesh.bindposes;
 
             return newMesh;
@@ -146,8 +150,19 @@ namespace com.aoyon.triangleselector.utils
             }
         }
 
-        private static void CopyBlendShapes(Mesh originalMesh, Mesh newMesh, Dictionary<int, int> indexMap)
+        private static void CopyBlendShapes(Mesh originalMesh, Mesh newMesh, List<int> indicestokeep)
         {
+            int vertexCount = originalMesh.vertexCount;
+            Vector3[] frameVertices = new Vector3[vertexCount];
+            Vector3[] frameNormals = new Vector3[vertexCount];
+            Vector3[] frameTangents = new Vector3[vertexCount];
+
+            Vector3[] newFrameVertices = new Vector3[newMesh.vertexCount];
+            Vector3[] newFrameNormals = new Vector3[newMesh.vertexCount];
+            Vector3[] newFrameTangents = new Vector3[newMesh.vertexCount];
+
+            int indicesCount = indicestokeep.Count;
+
             for (int i = 0; i < originalMesh.blendShapeCount; i++)
             {
                 string blendShapeName = originalMesh.GetBlendShapeName(i);
@@ -156,24 +171,15 @@ namespace com.aoyon.triangleselector.utils
                 for (int j = 0; j < frameCount; j++)
                 {
                     float frameWeight = originalMesh.GetBlendShapeFrameWeight(i, j);
-                    Vector3[] frameVertices = new Vector3[originalMesh.vertexCount];
-                    Vector3[] frameNormals = new Vector3[originalMesh.vertexCount];
-                    Vector3[] frameTangents = new Vector3[originalMesh.vertexCount];
-
                     originalMesh.GetBlendShapeFrameVertices(i, j, frameVertices, frameNormals, frameTangents);
 
-                    Vector3[] newFrameVertices = new Vector3[newMesh.vertexCount];
-                    Vector3[] newFrameNormals = new Vector3[newMesh.vertexCount];
-                    Vector3[] newFrameTangents = new Vector3[newMesh.vertexCount];
-
-                    foreach (var kv in indexMap)
+                    Parallel.For(0, indicesCount, k =>
                     {
-                        int originalIndex = kv.Key;
-                        int newIndex = kv.Value;
-                        newFrameVertices[newIndex] = frameVertices[originalIndex];
-                        newFrameNormals[newIndex] = frameNormals[originalIndex];
-                        newFrameTangents[newIndex] = frameTangents[originalIndex];
-                    }
+                        int index = indicestokeep[k];
+                        newFrameVertices[k] = frameVertices[index];
+                        newFrameNormals[k] = frameNormals[index];
+                        newFrameTangents[k] = frameTangents[index];
+                    });
 
                     newMesh.AddBlendShapeFrame(blendShapeName, frameWeight, newFrameVertices, newFrameNormals, newFrameTangents);
                 }
