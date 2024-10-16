@@ -212,49 +212,59 @@ namespace com.aoyon.triangleselector.utils
             skinnedMeshRenderer.sharedMaterials = usedMaterials.ToArray();
         }
 
-        public static Mesh keepTriangles(Mesh originalMesh, HashSet<int> triangleIndexestoKeep)
+        public static Mesh keepTriangles(Mesh originalMesh, IEnumerable<int> triangleIndicestoKeep)
         {
-            return ProcessTriangles(originalMesh, triangleIndexestoKeep, true);
+            return ProcessTriangles(originalMesh, triangleIndicestoKeep, true);
         }
 
-        public static Mesh RemoveTriangles(Mesh originalMesh, HashSet<int> triangleIndexestoRemove)
+        public static Mesh RemoveTriangles(Mesh originalMesh, IEnumerable<int> triangleIndicestoRemove)
         {
-            return ProcessTriangles(originalMesh, triangleIndexestoRemove, false);
+            return ProcessTriangles(originalMesh, triangleIndicestoRemove, false);
         }
 
-        private static Mesh ProcessTriangles(Mesh originalMesh, HashSet<int> triangleIndexes, bool keep)
+        public static Mesh keepTriangles(Mesh originalMesh, IEnumerable<Vector3> positionstoKeep)
         {
-            Mesh newMesh = Object.Instantiate(originalMesh);
-            
-            int submeshCount = originalMesh.subMeshCount;
-            List<int>[] newSubmeshTriangles = new List<int>[submeshCount];
+            return ProcessTriangles(originalMesh, TriangleConverter.Decode(originalMesh, positionstoKeep), true);
+        }
 
-            int globalTriangleIndexOffset = 0;
-            for (int submesh = 0; submesh < submeshCount; submesh++)
+        public static Mesh RemoveTriangles(Mesh originalMesh, IEnumerable<Vector3> positionstoRemove)
+        {
+            return ProcessTriangles(originalMesh, TriangleConverter.Decode(originalMesh, positionstoRemove), false);
+        }
+
+        private static Mesh ProcessTriangles(Mesh originalMesh, IEnumerable<int> triangleIndices, bool keep)
+        {
+            Mesh newMesh = UnityEngine.Object.Instantiate(originalMesh);
+
+            // 処理が不要な場合はスキップ
+            HashSet<int> triangleIndicesSet = new HashSet<int>(triangleIndices);
+            if ((keep && triangleIndicesSet.Count() == originalMesh.triangles.Count()) ||
+                (!keep && triangleIndicesSet.Count() == 0))
             {
-                int[] originalTriangles = originalMesh.GetTriangles(submesh);
-                newSubmeshTriangles[submesh] = new List<int>();
+                return newMesh;
+            }
+            
+            int globalTriangleIndexOffset = 0;
+            for (int submeshindex = 0; submeshindex < originalMesh.subMeshCount; submeshindex++)
+            {
+                int[] originalTriangles = originalMesh.GetTriangles(submeshindex);
+                var newSubmeshTriangles = new List<int>();
 
                 for (int i = 0; i < originalTriangles.Length; i += 3)
                 {
                     int globalTriangleIndex = (globalTriangleIndexOffset + i) / 3;
 
-                    if ((keep && triangleIndexes.Contains(globalTriangleIndex)) || 
-                        (!keep && !triangleIndexes.Contains(globalTriangleIndex)))
+                    if ((keep && triangleIndicesSet.Contains(globalTriangleIndex)) || 
+                        (!keep && !triangleIndicesSet.Contains(globalTriangleIndex)))
                     {
-                        newSubmeshTriangles[submesh].Add(originalTriangles[i]);
-                        newSubmeshTriangles[submesh].Add(originalTriangles[i + 1]);
-                        newSubmeshTriangles[submesh].Add(originalTriangles[i + 2]);
+                        newSubmeshTriangles.Add(originalTriangles[i]);
+                        newSubmeshTriangles.Add(originalTriangles[i + 1]);
+                        newSubmeshTriangles.Add(originalTriangles[i + 2]);
                     }
                 }
 
+                newMesh.SetTriangles(newSubmeshTriangles, submeshindex);
                 globalTriangleIndexOffset += originalTriangles.Length;
-            }
-
-            newMesh.subMeshCount = submeshCount;
-            for (int submesh = 0; submesh < submeshCount; submesh++)
-            {
-                newMesh.SetTriangles(newSubmeshTriangles[submesh], submesh);
             }
 
             return newMesh;
@@ -262,7 +272,7 @@ namespace com.aoyon.triangleselector.utils
         
         public static (Mesh, Dictionary<int, int>) ProcesscolliderMesh(Mesh originalMesh, HashSet<int> trianglesToKeep)
         {
-            Mesh newMesh = Object.Instantiate(originalMesh);
+            Mesh newMesh = UnityEngine.Object.Instantiate(originalMesh);
             int[] originalTriangles = newMesh.triangles;
 
             // trianglesToKeepのサイズに基づいて初期サイズを設定
@@ -277,10 +287,9 @@ namespace com.aoyon.triangleselector.utils
                 if (trianglesToKeep.Contains(triangleIndex))
                 {
                     // 前面ポリゴンの追加
-                    for (int j = 0; j < 3; j++)
-                    {
-                        newTriangles.Add(originalTriangles[i + j]);
-                    }
+                    newTriangles.Add(originalTriangles[i]);
+                    newTriangles.Add(originalTriangles[i + 1]);
+                    newTriangles.Add(originalTriangles[i + 2]);
                     newToOldTriangleMap[newTriangleIndex] = triangleIndex;
                     newTriangleIndex++;
 
