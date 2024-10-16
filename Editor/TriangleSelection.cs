@@ -236,7 +236,7 @@ namespace com.aoyon.triangleselector
 
         public static int FindIndex(List<TriangleSelection> triangleSelections, IReadOnlyList<Vector3> selection)
         {
-            int index = triangleSelections.FindIndex(ts => ts.selection.SequenceEqual(selection));
+            int index = triangleSelections.FindIndex(ts => ts.selection.ToHashSet().SetEquals(selection));
             return index;
         }
 
